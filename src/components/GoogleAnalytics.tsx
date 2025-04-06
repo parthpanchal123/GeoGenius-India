@@ -16,18 +16,22 @@ export default function GoogleAnalytics({ GA_MEASUREMENT_ID }: { GA_MEASUREMENT_
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (pathname) {
-      let url = pathname;
-      if (searchParams?.toString()) {
-        url = url + `?${searchParams.toString()}`;
+    const handleRouteChange = () => {
+      if (pathname) {
+        let url = pathname;
+        if (searchParams?.toString()) {
+          url = url + `?${searchParams.toString()}`;
+        }
+        // Send pageview with path
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('config', GA_MEASUREMENT_ID, {
+            page_path: url,
+          });
+        }
       }
-      // Send pageview with path
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('config', GA_MEASUREMENT_ID, {
-          page_path: url,
-        });
-      }
-    }
+    };
+
+    handleRouteChange();
   }, [pathname, searchParams, GA_MEASUREMENT_ID]);
 
   return (
