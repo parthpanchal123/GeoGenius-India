@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 17, 24, 39;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 255, 255, 255;
+  --input-bg: 255, 255, 255;
+  --input-text: 17, 24, 39;
+  --input-border: 209, 213, 219;
+  --button-primary: 37, 99, 235;
+  --button-primary-hover: 29, 78, 216;
+  --button-secondary: 229, 231, 235;
+  --button-secondary-hover: 209, 213, 219;
+  --card-bg: 255, 255, 255;
+}
+
+body {
+  min-height: 100vh;
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-start-rgb));
+}
+
+/* Input styles */
+input {
+  @apply border rounded px-4 py-2;
+  background-color: rgb(var(--input-bg));
+  color: rgb(var(--input-text));
+  border-color: rgb(var(--input-border));
+}
+
+input::placeholder {
+  @apply text-gray-500;
+}
+
+/* Button styles */
+.btn-primary {
+  @apply px-4 py-2 rounded font-medium text-white;
+  background-color: rgb(var(--button-primary));
+}
+
+.btn-primary:hover {
+  background-color: rgb(var(--button-primary-hover));
+}
+
+.btn-secondary {
+  @apply px-4 py-2 rounded font-medium text-gray-700;
+  background-color: rgb(var(--button-secondary));
+}
+
+.btn-secondary:hover {
+  background-color: rgb(var(--button-secondary-hover));
+}
+
+/* Card and container styles */
+.card,
+.container {
+  @apply border rounded-lg shadow-sm p-6;
+  background-color: rgb(var(--card-bg));
+  border-color: rgb(var(--input-border));
+}
+
+/* Game-specific styles */
+.score-text {
+  @apply text-gray-900 font-semibold text-lg;
+}
+
+.hint-text {
+  @apply text-gray-800 text-base leading-relaxed;
+}
+
+.city-name {
+  @apply text-gray-900 font-bold text-xl;
+}
+
+.attempts-text {
+  @apply text-gray-700;
+}
+
+.difficulty-text {
+  @apply text-gray-800 font-medium;
+}
+
+/* Game title */
+.game-title {
+  @apply text-2xl font-bold text-gray-900 mb-4;
+}
+
+/* Score display */
+.score-display {
+  @apply flex items-center gap-2 text-gray-900 font-semibold;
+}
+
+/* Guess button */
+.guess-button {
+  @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors;
+}
+
+/* Give up button */
+.give-up-button {
+  @apply text-gray-700 hover:text-gray-900 underline text-sm mt-2;
+} 
