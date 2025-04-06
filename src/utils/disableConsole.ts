@@ -1,4 +1,5 @@
 const isProduction = process.env.NODE_ENV === 'production';
+const isServer = typeof window === 'undefined';
 
 type ConsoleMethod = keyof Pick<Console, 'log' | 'info' | 'warn' | 'error' | 'debug' | 'trace'>;
 
@@ -13,7 +14,7 @@ const originalConsole = {
 };
 
 export const enableConsoleInDev = () => {
-  if (!isProduction) {
+  if (!isProduction && !isServer) {
     console.log = originalConsole.log;
     console.info = originalConsole.info;
     console.warn = originalConsole.warn;
@@ -24,7 +25,7 @@ export const enableConsoleInDev = () => {
 };
 
 export const disableConsole = () => {
-  if (isProduction) {
+  if (isProduction && !isServer) {
     try {
       const noop = () => {};
       

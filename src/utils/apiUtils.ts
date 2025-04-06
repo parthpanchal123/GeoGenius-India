@@ -212,7 +212,6 @@ async function fetchPixabayImages(cityName: string): Promise<string[]> {
     }
     return [];
   } catch (error) {
-    console.error('Error fetching Pixabay images:', error);
     return [];
   }
 }
@@ -230,7 +229,6 @@ async function fetchUnsplashImages(cityName: string): Promise<string[]> {
     }
     return [];
   } catch (error) {
-    console.error('Error fetching Unsplash images:', error);
     return [];
   }
 }
@@ -248,7 +246,6 @@ async function fetchGoogleCustomSearchImages(cityName: string): Promise<string[]
     }
     return [];
   } catch (error) {
-    console.error('Error fetching Google Custom Search images:', error);
     return [];
   }
 }
@@ -371,7 +368,6 @@ async function fetchWikipediaInfo(cityName: string): Promise<string[]> {
 
     return hints.length >= 3 ? hints : []; // Only return hints if we have at least 3 good ones
   } catch (error) {
-    console.error('Error fetching Wikipedia info:', error);
     return [];
   }
 }
