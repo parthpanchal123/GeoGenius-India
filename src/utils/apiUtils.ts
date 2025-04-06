@@ -48,10 +48,16 @@ async function getRandomIndianCity(): Promise<any> {
       throw new Error('No valid cities found in the data');
     }
 
-    // Use crypto for better randomization
-    const array = new Uint32Array(1);
-    crypto.getRandomValues(array);
-    const randomIndex = Math.floor(array[0] / (0xffffffff + 1) * cities.length);
+    // Use crypto for better randomization if available, fallback to Math.random
+    let randomIndex;
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      randomIndex = Math.floor(array[0] / (0xffffffff + 1) * cities.length);
+    } else {
+      randomIndex = Math.floor(Math.random() * cities.length);
+    }
+    
     const randomCity = cities[randomIndex];
     
     // Get Wikipedia content for additional information
@@ -71,12 +77,25 @@ async function getRandomIndianCity(): Promise<any> {
       randomCity.population
     );
 
+    // Create a unique ID for the city
+    const cityId = `${randomCity.name.toLowerCase().replace(/\s+/g, '-')}-${randomIndex}`;
+
+    // Return the complete city object
     return {
-      ...cityDetails,
-      initialHints: locationHints // Pass location hints separately
+      id: cityId,
+      name: randomCity.name,
+      alternateNames: [],
+      images: cityDetails.images || ['/placeholder-city.avif'],
+      hints: locationHints,
+      state: extractStateFromExtract(cityDetails.extract) || 'India',
+      difficulty: determineDifficulty(cityDetails),
+      categories: extractCategories(cityDetails),
+      coordinates: randomCity.coordinates,
+      population: randomCity.population
     };
   } catch (error) {
-    throw error;
+    // If anything fails, return a fallback city
+    return getRandomFallbackCity();
   }
 }
 
@@ -171,7 +190,8 @@ async function fetchCityDetails(cityName: string): Promise<any> {
             });
           }
         } catch (error) {
-          console.error('Error fetching Wikipedia images:', error);
+          // If image fetch fails, continue with any images we already have
+          images = images.length > 0 ? images : ['/placeholder-city.avif'];
         }
       }
     }
@@ -195,7 +215,17 @@ async function fetchCityDetails(cityName: string): Promise<any> {
       coordinates: page.coordinates?.[0]
     };
   } catch (error) {
-    throw error;
+    // Return a basic object with placeholder image if Wikipedia fetch fails
+    return {
+      city: cityName,
+      title: cityName,
+      description: '',
+      extract: '',
+      imageUrl: '/placeholder-city.avif',
+      images: ['/placeholder-city.avif'],
+      url: '',
+      coordinates: null
+    };
   }
 }
 
