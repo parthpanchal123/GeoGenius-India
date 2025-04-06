@@ -44,10 +44,12 @@ export default function GamePage() {
     isGameOver: boolean;
     showAnswer: boolean;
     feedback: { type: 'correct' | 'incorrect' | null; message: string };
+    correctAnswer: string | null;
   }>({
     isGameOver: false,
     showAnswer: false,
-    feedback: { type: null, message: '' }
+    feedback: { type: null, message: '' },
+    correctAnswer: null
   });
 
   // Load max score from localStorage on initial render
@@ -70,7 +72,8 @@ export default function GamePage() {
       setGameState({
         isGameOver: false,
         showAnswer: false,
-        feedback: { type: null, message: '' }
+        feedback: { type: null, message: '' },
+        correctAnswer: null
       });
       
       let city = await fetchRandomCity();
@@ -112,8 +115,9 @@ export default function GamePage() {
                cityAnswer.alternateNames.some(name => name === normalizedGuess);
       };
 
-      // Attach the checker function to window for the current session
+      // Attach the checker function and correct answer to window for the current session
       (window as any).__checkCityGuess = checkGuess;
+      (window as any).__correctCityName = city.name;
       
       setUserGuess('');
       setAttempts(0);
@@ -144,11 +148,13 @@ export default function GamePage() {
         feedback: { 
           type: 'correct', 
           message: `Correct! Moving to next city...` 
-        }
+        },
+        correctAnswer: (window as any).__correctCityName
       });
       
       // Clean up the checker function
       delete (window as any).__checkCityGuess;
+      delete (window as any).__correctCityName;
       setTimeout(loadNewCity, 2000);
     } else {
       const newAttempts = attempts + 1;
@@ -161,10 +167,12 @@ export default function GamePage() {
           feedback: { 
             type: 'incorrect', 
             message: `Game Over! Your final score: ${score}` 
-          }
+          },
+          correctAnswer: (window as any).__correctCityName
         });
         // Clean up the checker function
         delete (window as any).__checkCityGuess;
+        delete (window as any).__correctCityName;
       } else {
         setGameState(prev => ({
           ...prev,
@@ -183,10 +191,12 @@ export default function GamePage() {
     setGameState({
       isGameOver: false,
       showAnswer: false,
-      feedback: { type: null, message: '' }
+      feedback: { type: null, message: '' },
+      correctAnswer: null
     });
     // Clean up any existing checker function
     delete (window as any).__checkCityGuess;
+    delete (window as any).__correctCityName;
     loadNewCity();
   };
 
@@ -199,16 +209,19 @@ export default function GamePage() {
       feedback: { 
         type: 'incorrect', 
         message: `Game Over! Your final score: ${score}` 
-      }
+      },
+      correctAnswer: (window as any).__correctCityName
     });
     // Clean up the checker function
     delete (window as any).__checkCityGuess;
+    delete (window as any).__correctCityName;
   };
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
       delete (window as any).__checkCityGuess;
+      delete (window as any).__correctCityName;
     };
   }, []);
 
@@ -257,7 +270,7 @@ export default function GamePage() {
                 <div className="relative w-full h-64 animate-fade-in">
                   <Image
                     src={currentCity.images[0]}
-                    alt="City"
+                    alt={gameState.showAnswer ? gameState.correctAnswer || 'City' : 'City'}
                     fill
                     style={{ objectFit: 'cover' }}
                     priority
@@ -272,8 +285,10 @@ export default function GamePage() {
               )}
             </div>
 
-            <div className="space-y-4 animate-fade-in-up">
-              <h2 className="text-xl font-semibold">Here's what we know about this city:</h2>
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">
+                {gameState.showAnswer ? `The city is: ${gameState.correctAnswer}` : "Here's what we know about this city:"}
+              </h2>
               <ul className="list-disc pl-5 space-y-2">
                 {currentCity.hints.map((hint, index) => (
                   <li key={index} className="animate-fade-in-up" style={{ animationDelay: `${index * 150}ms` }}>
@@ -307,7 +322,7 @@ export default function GamePage() {
               </div>
             )}
 
-            {gameState.feedback.message && (
+            {gameState.showAnswer && (
               <div className="p-4 rounded-lg border animate-fade-in">
                 {gameState.feedback.message}
                 {gameState.isGameOver && gameState.feedback.type === 'incorrect' && (
@@ -323,7 +338,7 @@ export default function GamePage() {
 
           <CardFooter className="flex justify-between animate-fade-in">
             <div>
-              Attempts: {attempts}/6
+              Attempts: {attempts}/5
             </div>
             <div>
               Difficulty: {currentCity.difficulty === 1 ? 'Easy' : currentCity.difficulty === 2 ? 'Medium' : 'Hard'}

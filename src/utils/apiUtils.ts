@@ -116,7 +116,11 @@ async function fetchCityDetails(cityName: string): Promise<any> {
         origin: "*"
       }).toString();
 
-    const response = await fetch(apiUrl);
+    const response = await fetch(apiUrl, {
+      headers: {
+        'User-Agent': 'GeoGenius India/1.0 (https://geogenius-india.vercel.app)'
+      }
+    });
     
     if (!response.ok) {
       throw new Error(`Wikipedia API HTTP error! Status: ${response.status}`);
@@ -179,7 +183,11 @@ async function fetchCityDetails(cityName: string): Promise<any> {
               origin: "*"
             }).toString();
 
-          const imageResponse = await fetch(imageInfoUrl);
+          const imageResponse = await fetch(imageInfoUrl, {
+            headers: {
+              'User-Agent': 'GeoGenius India/1.0 (https://geogenius-india.vercel.app)'
+            }
+          });
           const imageData = await imageResponse.json();
 
           if (imageData.query?.pages) {
@@ -321,7 +329,11 @@ async function fetchWikipediaInfo(cityName: string): Promise<string[]> {
         origin: "*"
       }).toString();
 
-    const searchResponse = await fetch(searchUrl);
+    const searchResponse = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'GeoGenius India/1.0 (https://geogenius-india.vercel.app)'
+      }
+    });
     const searchData = await searchResponse.json();
 
     if (!searchData.query?.search?.[0]?.pageid) {
@@ -340,7 +352,11 @@ async function fetchWikipediaInfo(cityName: string): Promise<string[]> {
         explaintext: "1"
       }).toString();
 
-    const pageResponse = await fetch(pageUrl);
+    const pageResponse = await fetch(pageUrl, {
+      headers: {
+        'User-Agent': 'GeoGenius India/1.0 (https://geogenius-india.vercel.app)'
+      }
+    });
     const pageData = await pageResponse.json();
     const pageId = searchData.query.search[0].pageid;
     const extract = pageData.query?.pages?.[pageId]?.extract;
@@ -443,7 +459,41 @@ function generateLocationBasedHints(lat: number, lon: number, population?: numbe
 export const fetchRandomCity = async (): Promise<City> => {
   try {
     const city = await getRandomIndianCity();
-    return city;
+    
+    // Fetch Wikipedia hints
+    const wikiHints = await fetchWikipediaInfo(city.name);
+    
+    // Combine location hints with Wikipedia hints
+    const combinedHints = [
+      ...city.hints,
+      ...wikiHints
+    ];
+    
+    // Ensure we have at least 3 hints
+    if (combinedHints.length < 3) {
+      const genericHints = [
+        'Known for its rich cultural heritage',
+        'A popular tourist destination in India',
+        'Home to several historical landmarks',
+        'Famous for its local cuisine',
+        'A hub for business and commerce',
+        'Known for its vibrant arts scene',
+        'A city with a mix of modern and traditional architecture'
+      ];
+      
+      while (combinedHints.length < 3) {
+        const randomIndex = Math.floor(Math.random() * genericHints.length);
+        const hint = genericHints[randomIndex];
+        if (!combinedHints.includes(hint)) {
+          combinedHints.push(hint);
+        }
+      }
+    }
+    
+    return {
+      ...city,
+      hints: combinedHints
+    };
   } catch (error) {
     return getRandomFallbackCity();
   }
@@ -547,6 +597,12 @@ const generateHints = (cityDetails: CityDetails): string[] => {
       hints.push('A major metropolitan area in India');
     } else if (population > 1000000) {
       hints.push('A significant urban center in India');
+    } else if (population > 500000) {
+      hints.push(`This is a medium-sized city with about ${Math.floor(population/1000)*1000} residents`);
+    } else if (population > 100000) {
+      hints.push(`This is a smaller city with about ${Math.floor(population/1000)*1000} residents`);
+    } else {
+      hints.push('This is a small urban center');
     }
   }
   
@@ -556,33 +612,35 @@ const generateHints = (cityDetails: CityDetails): string[] => {
     const lng = cityDetails.coordinates.lon;
     
     // Coastal city hint (approximate)
-    // if (Math.abs(lng - 72.8) < 5 || Math.abs(lng - 88.3) < 5) {
-    //   hints.push('Likely a coastal city');
-    // }
+    if (Math.abs(lng - 72.8) < 5 || Math.abs(lng - 88.3) < 5) {
+      hints.push('Likely a coastal city');
+    }
   }
   
   // Extract interesting facts from the extract without revealing the city name
   const extract = cityDetails.extract;
-  const sentences = extract.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  
-  for (const sentence of sentences) {
-    // Skip sentences that contain the city name
-    if (sentence.toLowerCase().includes(cityDetails.title.toLowerCase())) {
-      continue;
-    }
+  if (extract) {
+    const sentences = extract.split(/[.!?]+/).filter(s => s.trim().length > 0);
     
-    // Look for interesting facts about the city
-    if (sentence.includes('known for') || 
-        sentence.includes('famous for') || 
-        sentence.includes('home to') ||
-        sentence.includes('located') ||
-        sentence.includes('situated')) {
-      // Remove the city name from the sentence if it appears
-      let hint = sentence.replace(new RegExp(cityDetails.title, 'gi'), 'this city');
-      hint = hint.replace(/\s+/g, ' ').trim();
+    for (const sentence of sentences) {
+      // Skip sentences that contain the city name
+      if (sentence.toLowerCase().includes(cityDetails.title.toLowerCase())) {
+        continue;
+      }
       
-      if (hint.length > 20 && !hints.includes(hint)) {
-        hints.push(hint);
+      // Look for interesting facts about the city
+      if (sentence.includes('known for') || 
+          sentence.includes('famous for') || 
+          sentence.includes('home to') ||
+          sentence.includes('located') ||
+          sentence.includes('situated')) {
+        // Remove the city name from the sentence if it appears
+        let hint = sentence.replace(new RegExp(cityDetails.title, 'gi'), 'this city');
+        hint = hint.replace(/\s+/g, ' ').trim();
+        
+        if (hint.length > 20 && !hints.includes(hint)) {
+          hints.push(hint);
+        }
       }
     }
   }
@@ -600,13 +658,13 @@ const generateHints = (cityDetails: CityDetails): string[] => {
     ];
     
     // Add generic hints until we have at least 3
-    // while (hints.length < 3) {
-    //   const randomIndex = Math.floor(Math.random() * genericHints.length);
-    //   const hint = genericHints[randomIndex];
-    //   if (!hints.includes(hint)) {
-    //     hints.push(hint);
-    //   }
-    // }
+    while (hints.length < 3) {
+      const randomIndex = Math.floor(Math.random() * genericHints.length);
+      const hint = genericHints[randomIndex];
+      if (!hints.includes(hint)) {
+        hints.push(hint);
+      }
+    }
   }
   
   return hints;
