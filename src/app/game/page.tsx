@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader2, Trophy, X, Check, MapPin, Users, Info, Image as ImageIcon } from 'lucide-react';
+import { trackGameStart, trackGameEnd, trackCorrectGuess, trackIncorrectGuess, trackGiveUp } from '@/utils/analytics';
 
 interface PlaceholderImageProps {
   state?: string;
@@ -63,6 +64,7 @@ export default function GamePage() {
   // Load a new city when the component mounts
   useEffect(() => {
     loadNewCity();
+    trackGameStart();
   }, []);
 
   const loadNewCity = async () => {
@@ -142,6 +144,8 @@ export default function GamePage() {
         localStorage.setItem('maxScore', newScore.toString());
       }
       
+      trackCorrectGuess((window as any).__correctCityName, attempts);
+      
       setGameState({
         isGameOver: true,
         showAnswer: true,
@@ -160,7 +164,10 @@ export default function GamePage() {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       
+      trackIncorrectGuess(userGuess, newAttempts);
+      
       if (newAttempts >= 5) {
+        trackGameEnd(score, newAttempts);
         setGameState({
           isGameOver: true,
           showAnswer: true,
@@ -198,10 +205,14 @@ export default function GamePage() {
     delete (window as any).__checkCityGuess;
     delete (window as any).__correctCityName;
     loadNewCity();
+    trackGameStart();
   };
 
   const handleShowAnswer = () => {
     if (!(window as any).__checkCityGuess) return;
+    
+    trackGiveUp((window as any).__correctCityName, attempts);
+    trackGameEnd(score, attempts);
     
     setGameState({
       isGameOver: true,
