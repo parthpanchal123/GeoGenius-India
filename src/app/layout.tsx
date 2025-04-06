@@ -1,15 +1,10 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { disableConsole } from '@/utils/disableConsole';
 
 const inter = Inter({ subsets: ['latin'] });
-
-// Disable console in production
-if (typeof window !== 'undefined') {
-  disableConsole();
-}
 
 export const metadata: Metadata = {
   title: 'GeoGenius India',
@@ -21,6 +16,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Initialize console disabling
+  useEffect(() => {
+    disableConsole();
+  }, []);
+
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-white text-gray-900`}>

@@ -416,64 +416,9 @@ function generateLocationBasedHints(lat: number, lon: number, population?: numbe
 // Function to fetch a random city for the game
 export const fetchRandomCity = async (): Promise<City> => {
   try {
-    const cityDetails = await getRandomIndianCity();
-    
-    if (!cityDetails || !cityDetails.title) {
-      return getRandomFallbackCity();
-    }
-
-    let hints: string[] = [];
-
-    // ALWAYS generate location hints first if coordinates exist
-    if (cityDetails.coordinates) {
-      console.log('Generating location hints for:', cityDetails.coordinates);
-      const locationHints = generateLocationBasedHints(
-        cityDetails.coordinates.lat,
-        cityDetails.coordinates.lon,
-        cityDetails.population
-      );
-      hints = [...locationHints];
-      console.log('Generated location hints:', locationHints);
-    }
-
-    // Then add Wikipedia hints
-    const wikiHints = await fetchWikipediaInfo(cityDetails.title);
-    if (wikiHints && wikiHints.length > 0) {
-      // Combine hints while maintaining uniqueness and preserving location hints at the start
-      hints = [...hints, ...wikiHints.filter(hint => !hints.includes(hint))];
-    }
-
-    // Ensure we have at least 3 hints
-    if (hints.length < 3) {
-      hints = [...hints, ...generateHints(cityDetails)];
-    }
-
-    // Limit to 5 hints while preserving location hints
-    hints = hints.slice(0, 5);
-    
-    const city: City = {
-      id: cityDetails.title.toLowerCase().replace(/\s+/g, '-'),
-      name: cityDetails.title,
-      alternateNames: [cityDetails.title],
-      images: cityDetails.images?.length > 0 ? cityDetails.images : ['/placeholder-city.jpg'],
-      hints: hints,
-      state: extractStateFromExtract(cityDetails.extract || ''),
-      difficulty: determineDifficulty(cityDetails),
-      categories: extractCategories(cityDetails),
-      coordinates: cityDetails.coordinates,
-      population: cityDetails.population
-    };
-
-    console.log('Final city object:', {
-      name: city.name,
-      coordinates: city.coordinates,
-      population: city.population,
-      hints: city.hints
-    });
-
+    const city = await getRandomIndianCity();
     return city;
   } catch (error) {
-    console.error('Error fetching random city:', error);
     return getRandomFallbackCity();
   }
 };
