@@ -463,11 +463,24 @@ export const fetchRandomCity = async (): Promise<City> => {
     // Fetch Wikipedia hints
     const wikiHints = await fetchWikipediaInfo(city.name);
     
-    // Combine location hints with Wikipedia hints
-    const combinedHints = [
+    // Create state hint
+    const stateHint = `This city is located in ${city.state}`;
+    
+    // Combine all hints and remove duplicates
+    const allHints = new Set<string>([
+      stateHint,
       ...city.hints,
       ...wikiHints
-    ];
+    ]);
+    
+    // Convert back to array and ensure state hint is first
+    const combinedHints = Array.from(allHints);
+    const stateHintIndex = combinedHints.findIndex(hint => hint === stateHint);
+    if (stateHintIndex > 0) {
+      // Remove state hint from its current position and add it to the beginning
+      combinedHints.splice(stateHintIndex, 1);
+      combinedHints.unshift(stateHint);
+    }
     
     // Ensure we have at least 3 hints
     if (combinedHints.length < 3) {
